@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16
+    container_name: client-onboarding-db
+    environment:
+      POSTGRES_DB: onboarding_db
+      POSTGRES_USER: onboarding_user
+      POSTGRES_PASSWORD: onboarding_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U onboarding_user -d onboarding_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: client-onboarding-api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://onboarding_user:onboarding_password@db:5432/onboarding_db
+      FORCE_FAIL_STEP: ""
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
